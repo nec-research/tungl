@@ -1,8 +1,8 @@
-// Copyright 2017-2022 NEC Laboratories Europe
+// Copyright 2022 NEC Laboratories Europe
 
 #pragma once
 
-#include "tungl.h"
+#include "api.h"
 
 #include <sstream>
 #include <functional>
@@ -25,4 +25,4 @@ inline void tungl_throw [[noreturn]] (const char* module, const char* file, cons
 #define L_LOG(LEVEL, MODULE, FILE, LINE, ...)	tungl_log  (LEVEL, MODULE, FILE, LINE, [&](std::ostream& ss) -> void { ss << __VA_ARGS__; })
 #define L_THROW(MODULE, FILE, LINE, ...)		tungl_throw(       MODULE, FILE, LINE, [&](std::ostream& ss) -> void { ss << __VA_ARGS__; })
 
-#include "macros.h"
+#include "c.h"

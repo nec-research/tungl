@@ -1,0 +1,5 @@
+// Copyright 2022 NEC Laboratories Europe
+
+#pragma once
+
+#define TUNGL_VERSION "@Tungl_VERSION@"
