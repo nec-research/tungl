@@ -7,6 +7,10 @@ projects.
 <table>
 <tr><th>Version</th><th>Comment</th></tr>
 
+<tr><td>v0.1.1</td><td>
+Added <code>TUNGL_TIME</code> env var.
+</td></tr>
+
 <tr><td>v0.1.0</td><td>
 Initial Release
 </td></tr>
@@ -57,12 +61,21 @@ import tungl
 tungl.set_module('my awesome python application')
 tungl.get_module()
 tungl.set_level(tungl.Level.[ERROR, INFO, WARN, DEBUG, TRACE])
+<<<<<<< HEAD
 tungl.info ("Message!", __file__)
 tungl.trace("Message!", __file__)
 tungl.error("Message!", __file__)
 tungl.warn ("Message!", __file__)
 tungl.debug("Message!", __file__)
 tungl.throw("Message!", __file__)
+=======
+tungl.info ("Message!", file=__file__)
+tungl.trace("Message!", file=__file__)
+tungl.error("Message!", file=__file__)
+tungl.warn ("Message!", file=__file__)
+tungl.debug("Message!", file=__file__)
+tungl.throw("Message!", file=__file__)
+>>>>>>> master
 # there is no convenient way to automatically determine the line in Python,
 # BUT you can set it manually if you like.
 ```

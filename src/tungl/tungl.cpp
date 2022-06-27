@@ -24,7 +24,7 @@ inline uint64_t tungl_time(void) {
 }
 
 //------------------------------------------------------------------------------
-static	uint64_t		s_tungl_start		= tungl_time();
+static	uint64_t		s_tungl_start		= 0;
 static	tungl_level_t	s_tungl_level		= TUNGL_LEVEL_WARN;
 static	bool			s_tungl_color		= true;
 
@@ -38,6 +38,14 @@ __attribute__((constructor))
 static void tungl_init(void) {
 	if(auto env = std::getenv("TUNGL_LOG"))		tungl_set_level_str(env);
 	if(auto env = std::getenv("TUNGL_COLOR"))	tungl_set_color_str(env);
+	if(auto env = std::getenv("TUNGL_TIME")) {
+		s_tungl_start = std::atol(env);
+	} else {
+		s_tungl_start = tungl_time();
+		std::ostringstream g;
+		g << s_tungl_start;
+		setenv("TUNGL_TIME", g.str().c_str(), 1);
+	}
 
 #if TUNGL_WITH_FILE
 	if(auto env = std::getenv("TUNGL_FILE"))	tungl_set_file(env);
