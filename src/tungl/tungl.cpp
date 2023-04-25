@@ -182,9 +182,10 @@ inline std::string tungl_format(const tungl_level_t level, std::string_view modu
 
 	if(module.size()) {
 		g << '[';
+		g << module;
 		if(module_dots)
 			g << "...";
-		g << module << "] ";
+		g << "] ";
 	} else {
 		g << ' ';
 	}
@@ -237,7 +238,7 @@ inline void tungl_log_impl(const tungl_level_t level, const char* module_, const
 		if(end == std::string_view::npos)
 			end = msg.size();
 
-		std::string_view line(msg.data() + start, end - start);
+		const std::string_view line(msg.data() + start, end - start);
 
 		g << format << color_begin << line << color_end;
 		if(line[line.size() - 1] != '\r')

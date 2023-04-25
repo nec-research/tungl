@@ -7,6 +7,10 @@ projects.
 <table>
 <tr><th>Version</th><th>Comment</th></tr>
 
+<tr><td>v0.1.3</td><td>
+Added <code>module</code> and <code>sep</code> options to Python API.
+</td></tr>
+
 <tr><td>v0.1.2</td><td>
 Lowered requirements to be Python3.6 compatible.
 </td></tr>
