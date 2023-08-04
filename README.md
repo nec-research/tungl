@@ -7,6 +7,10 @@ projects.
 <table>
 <tr><th>Version</th><th>Comment</th></tr>
 
+<tr><td>v0.1.4</td><td>
+Code refactoring.
+</td></tr>
+
 <tr><td>v0.1.3</td><td>
 Added <code>module</code> and <code>sep</code> options to Python API.
 </td></tr>

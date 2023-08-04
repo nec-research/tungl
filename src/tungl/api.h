@@ -1,4 +1,4 @@
-// Copyright 2022 NEC Laboratories Europe
+// Copyright 2023 NEC Laboratories Europe
 
 // Tungl: Iclandic for "Moon"
 #pragma once
@@ -35,7 +35,7 @@ TUNGL_API	void			tungl_throw		TUNGL_NORETURN	(const char* module, const char* fi
 TUNGL_API	void			tungl_vlog						(const tungl_level_t level, const char* module, const char* file, const int line, const char* msg, va_list args);
 TUNGL_API	void			tungl_vthrow	TUNGL_NORETURN	(const char* module, const char* file, const int line, const char* msg, va_list args);
 
-#if TUNGL_WITH_FILE
+#if !defined(__NEC__)
 TUNGL_API	const char*		tungl_get_file					(void);
 TUNGL_API	void			tungl_set_file					(const char* file);
 #endif

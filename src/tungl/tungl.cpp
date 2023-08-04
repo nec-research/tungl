@@ -28,7 +28,7 @@ static	uint64_t		s_tungl_start		= 0;
 static	tungl_level_t	s_tungl_level		= TUNGL_LEVEL_WARN;
 static	bool			s_tungl_color		= true;
 
-#if TUNGL_WITH_FILE
+#if !defined(__NEC__)
 static	FILE*			s_tungl_file_handle	= 0;
 static	const char*		s_tungl_file		= 0;
 #endif
@@ -47,13 +47,13 @@ static void tungl_init(void) {
 		setenv("TUNGL_TIME", g.str().c_str(), 1);
 	}
 
-#if TUNGL_WITH_FILE
+#if !defined(__NEC__)
 	if(auto env = std::getenv("TUNGL_FILE"))	tungl_set_file(env);
 #endif
 }
 
 //------------------------------------------------------------------------------
-#if TUNGL_WITH_FILE
+#if !defined(__NEC__)
 __attribute__((destructor))
 static void tungl_fini(void) {
 	if(s_tungl_file_handle) {
@@ -252,7 +252,7 @@ inline void tungl_log_impl(const tungl_level_t level, const char* module_, const
 	if(!s_tungl_color)
 		newMsg = std::regex_replace(newMsg, remove_color, "");
 
-#if TUNGL_WITH_FILE
+#if !defined(__NEC__)
 	if(s_tungl_file_handle) {
 		va_list fargs;
 		va_copy(fargs, args);
