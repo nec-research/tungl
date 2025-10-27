@@ -7,6 +7,10 @@ projects.
 <table>
 <tr><th>Version</th><th>Comment</th></tr>
 
+<tr><td>v0.1.5</td><td>
+Bugfixing for NCC compiler.
+</td></tr>
+
 <tr><td>v0.1.4</td><td>
 Code refactoring.
 </td></tr>

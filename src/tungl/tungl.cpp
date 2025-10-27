@@ -26,9 +26,9 @@ inline uint64_t tungl_time(void) {
 //------------------------------------------------------------------------------
 static	uint64_t		s_tungl_start		= 0;
 static	tungl_level_t	s_tungl_level		= TUNGL_LEVEL_WARN;
-static	bool			s_tungl_color		= true;
 
 #if !defined(__NEC__)
+static	bool			s_tungl_color		= true;
 static	FILE*			s_tungl_file_handle	= 0;
 static	const char*		s_tungl_file		= 0;
 #endif
@@ -37,7 +37,6 @@ static	const char*		s_tungl_file		= 0;
 __attribute__((constructor))
 static void tungl_init(void) {
 	if(auto env = std::getenv("TUNGL_LOG"))		tungl_set_level_str(env);
-	if(auto env = std::getenv("TUNGL_COLOR"))	tungl_set_color_str(env);
 	if(auto env = std::getenv("TUNGL_TIME")) {
 		s_tungl_start = std::atol(env);
 	} else {
@@ -47,13 +46,14 @@ static void tungl_init(void) {
 		setenv("TUNGL_TIME", g.str().c_str(), 1);
 	}
 
-#if !defined(__NEC__)
+#ifndef __NEC__
+	if(auto env = std::getenv("TUNGL_COLOR"))	tungl_set_color_str(env);
 	if(auto env = std::getenv("TUNGL_FILE"))	tungl_set_file(env);
 #endif
 }
 
 //------------------------------------------------------------------------------
-#if !defined(__NEC__)
+#ifndef __NEC__
 __attribute__((destructor))
 static void tungl_fini(void) {
 	if(s_tungl_file_handle) {
@@ -79,16 +79,17 @@ TUNGL_API void tungl_set_file(const char* file)	{
 		s_tungl_file_handle = fopen(s_tungl_file, "a");
 	}
 }
+
+TUNGL_API int	tungl_is_color		(void)				{	return s_tungl_color;										}
+TUNGL_API void	tungl_set_color		(const int enabled)	{	s_tungl_color = enabled;									}
+TUNGL_API void	tungl_set_color_str	(const char* str)	{	tungl_set_color(str ? std::string_view(str) != "OFF" : 1);	}
 #endif
 
 //------------------------------------------------------------------------------
-TUNGL_API int			tungl_is_color		(void)						{	return s_tungl_color;										}
-TUNGL_API int			tungl_is_active		(const tungl_level_t level)	{	return level <= s_tungl_level;								}
-TUNGL_API tungl_level_t	tungl_get_level		(void)						{	return s_tungl_level;										}
-TUNGL_API void			tungl_set_color		(const int enabled)			{	s_tungl_color = enabled;									}
-TUNGL_API void			tungl_set_level		(const tungl_level_t level)	{	s_tungl_level = level;										}
-TUNGL_API void			tungl_set_level_str	(const char* str)			{	tungl_set_level(tungl_get_level_str(str));					}
-TUNGL_API void			tungl_set_color_str	(const char* str)			{	tungl_set_color(str ? std::string_view(str) != "OFF" : 1);	}
+TUNGL_API int			tungl_is_active		(const tungl_level_t level)	{	return level <= s_tungl_level;				}
+TUNGL_API tungl_level_t	tungl_get_level		(void)						{	return s_tungl_level;						}
+TUNGL_API void			tungl_set_level		(const tungl_level_t level)	{	s_tungl_level = level;						}
+TUNGL_API void			tungl_set_level_str	(const char* str)			{	tungl_set_level(tungl_get_level_str(str));	}
 
 //------------------------------------------------------------------------------
 TUNGL_API tungl_level_t tungl_get_level_str(const char* str) {
@@ -117,7 +118,7 @@ TUNGL_API const char* tungl_color(const tungl_level_t level) {
 };
 
 //------------------------------------------------------------------------------
-inline std::string tungl_format(const tungl_level_t level, std::string_view module, std::string_view file, const int line) {
+static std::string tungl_format(const tungl_level_t level, std::string_view module, std::string_view file, const int line) {
 	int64_t space		= TUNGL_PROLOG_LEN;
 	bool module_dots	= false;
 	bool file_dots		= false;
@@ -176,9 +177,17 @@ inline std::string tungl_format(const tungl_level_t level, std::string_view modu
 	}
 	g << ']';
 
-	float time = (tungl_time() - s_tungl_start)/1000.0f;
-	g << '[' << std::setprecision(2) << std::fixed << std::right << std::setw(6) << time << ']';
-	g << L_EMPH;
+	auto time = (tungl_time() - s_tungl_start)/1000.0f;
+	g << '[' << std::right << std::setw(6);
+#ifdef __NEC__
+	constexpr size_t bufSize = 10;
+	char buf[bufSize];
+	snprintf(buf, bufSize, "%6.2f", time);
+	g << buf;
+#else
+	g << std::setprecision(2) << std::fixed << time;
+#endif
+	g << ']' << L_EMPH;
 
 	if(module.size()) {
 		g << '[';
@@ -194,8 +203,16 @@ inline std::string tungl_format(const tungl_level_t level, std::string_view modu
 		g << "...";
 	g << file;
 	
-	if(line)
-		g << " (" << line << ")";
+	if(line) {
+		g << " (";
+#ifdef __NEC__
+		snprintf(buf, bufSize, "%i", line);
+		g << buf;
+#else
+		g << line;
+#endif
+		g << ')';
+	}
 	g << L_RESET;
 
 	for(int64_t i = 0; i < space; i++)
@@ -205,13 +222,8 @@ inline std::string tungl_format(const tungl_level_t level, std::string_view modu
 }
 
 //------------------------------------------------------------------------------
-inline void tungl_log_impl(const tungl_level_t level, const char* module_, const char* file_, const int line, const char* msg_, va_list args) {
-	static std::regex remove_color("\033[[0-9;]+m");
-
-	if(!tungl_is_active(level))
-		return;
-
-	if(!msg_)
+static void tungl_log_impl(const tungl_level_t level, const char* module_, const char* file_, const int line, const char* msg_, va_list args) {
+	if(!tungl_is_active(level) || !msg_)
 		return;
 
 	// C++ doesn't standardize to use nullptr constructions of string_view
@@ -249,10 +261,11 @@ inline void tungl_log_impl(const tungl_level_t level, const char* module_, const
 
 	auto newMsg = g.str();
 
+#ifndef __NEC__
+	static std::regex remove_color("\033[[0-9;]+m");
 	if(!s_tungl_color)
 		newMsg = std::regex_replace(newMsg, remove_color, "");
 
-#if !defined(__NEC__)
 	if(s_tungl_file_handle) {
 		va_list fargs;
 		va_copy(fargs, args);
