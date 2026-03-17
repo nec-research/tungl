@@ -151,7 +151,7 @@ static void tungl_to_string(std::ostringstream& g, const T& value) {
 	constexpr size_t bufSize = 10;
 	char buf[bufSize];
 	if		constexpr(std::is_same_v<T, int>)	snprintf(buf, bufSize, "%i",	value);
-	else if	constexpr(std::is_vame_v<T, float>)	snprintf(buf, bufSize, "%6.2f",	value);
+	else if	constexpr(std::is_same_v<T, float>)	snprintf(buf, bufSize, "%6.2f",	value);
 	g << buf;
 #else
 	g << value;

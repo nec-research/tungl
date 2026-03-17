@@ -7,6 +7,10 @@ projects.
 <table>
 <tr><th>Version</th><th>Comment</th></tr>
 
+<tr><td>v0.1.7</td><td>
+Fixed typo in SX-Aurora code.
+</td></tr>
+
 <tr><td>v0.1.6</td><td>
 Added detection of rank within multi-process application (NEC MPI, OpenMPI and
 TorchRun).
