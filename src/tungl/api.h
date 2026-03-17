@@ -22,6 +22,10 @@
 inline void tungl_nop(void) {}
 
 TUNGL_API	const char*		tungl_color						(const tungl_level_t level);
+TUNGL_API	int				tungl_dist_global_rank			(void);
+TUNGL_API	int				tungl_dist_global_size			(void);
+TUNGL_API	int				tungl_dist_local_rank			(void);
+TUNGL_API	int				tungl_dist_local_size			(void);
 TUNGL_API	int				tungl_is_active					(const tungl_level_t level);
 TUNGL_API	tungl_level_t	tungl_get_level					(void);
 TUNGL_API	tungl_level_t	tungl_get_level_str				(const char* str);

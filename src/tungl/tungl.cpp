@@ -26,6 +26,10 @@ inline uint64_t tungl_time(void) {
 //------------------------------------------------------------------------------
 static	uint64_t		s_tungl_start		= 0;
 static	tungl_level_t	s_tungl_level		= TUNGL_LEVEL_WARN;
+static	int				s_tungl_local_rank	= 0;
+static	int				s_tungl_local_size	= 1;
+static	int				s_tungl_global_rank	= 0;
+static	int				s_tungl_global_size	= 1;
 
 #if !defined(__NEC__)
 static	bool			s_tungl_color		= true;
@@ -44,6 +48,29 @@ static void tungl_init(void) {
 		std::ostringstream g;
 		g << s_tungl_start;
 		setenv("TUNGL_TIME", g.str().c_str(), 1);
+	}
+
+	if([] {
+		const std::initializer_list<std::initializer_list<const char*>> list = {
+			{"NMPI_LOCAL_RANK_DEVICE",		"MPISIZE",						"MPIRANK",				"MPISIZE"				},	// NEC MPI, TODO: correct localSize!
+			{"LOCAL_RANK",					"LOCAL_WORLD_SIZE ",			"RANK",					"WORLD_SIZE"			},	// TorchRun
+			{"OMPI_COMM_WORLD_LOCAL_RANK",	"OMPI_COMM_WORLD_LOCAL_SIZE",	"OMPI_COMM_WORLD_RANK",	"OMPI_COMM_WORLD_SIZE"	}	// OpenMPI
+		};
+
+		for(auto& tool : list) {
+			auto it = tool.begin();
+			if(auto x = std::getenv(*(it++)))	{	s_tungl_local_rank  = std::atoi(x);	} else { continue; }
+			if(auto x = std::getenv(*(it++)))	{	s_tungl_local_size  = std::atoi(x);	} else { continue; }
+			if(auto x = std::getenv(*(it++)))	{	s_tungl_global_rank = std::atoi(x);	} else { continue; }
+			if(auto x = std::getenv(*(it++)))	{	s_tungl_global_size = std::atoi(x);	} else { continue; }
+			return false;
+		}
+		return true;
+	}()) {
+		s_tungl_local_rank	= 0;
+		s_tungl_local_size	= 1;
+		s_tungl_global_rank	= 0;
+		s_tungl_global_size	= 1;
 	}
 
 #ifndef __NEC__
@@ -118,16 +145,39 @@ TUNGL_API const char* tungl_color(const tungl_level_t level) {
 };
 
 //------------------------------------------------------------------------------
+template<typename T>
+static void tungl_to_string(std::ostringstream& g, const T& value) {
+#ifdef __NEC__
+	constexpr size_t bufSize = 10;
+	char buf[bufSize];
+	if		constexpr(std::is_same_v<T, int>)	snprintf(buf, bufSize, "%i",	value);
+	else if	constexpr(std::is_vame_v<T, float>)	snprintf(buf, bufSize, "%6.2f",	value);
+	g << buf;
+#else
+	g << value;
+#endif
+}
+
+//------------------------------------------------------------------------------
 static std::string tungl_format(const tungl_level_t level, std::string_view module, std::string_view file, const int line) {
 	int64_t space		= TUNGL_PROLOG_LEN;
 	bool module_dots	= false;
 	bool file_dots		= false;
 
+	auto cnt = [](const int val) {
+		int len = 0; 
+		for(int i = val; i != 0; i /= 10, len++);
+		return len;
+	};
+
 	// Line --------------------------------------------------------------------
 	if(line) {
-		int line_len = 0; 
-		for(int i = line; i != 0; i /= 10, line_len++);
-		space -= line_len + 3; // " (" << line << ")"
+		space -= cnt(line) + 3; // " (" << line << ")"
+	}
+
+	// Rank --------------------------------------------------------------------
+	if(s_tungl_global_size > 1) {
+		space -= cnt(s_tungl_global_rank) + cnt(s_tungl_global_size) + 3; // "[{RANK}/{SIZE}]"
 	}
 
 	// Module ------------------------------------------------------------------
@@ -167,6 +217,12 @@ static std::string tungl_format(const tungl_level_t level, std::string_view modu
 	
 	// Format String -----------------------------------------------------------
 	std::ostringstream g;
+	if(s_tungl_global_size > 1) {
+		g << '[' << L_EMPH;
+		tungl_to_string(g, s_tungl_global_rank); g << '/'; tungl_to_string(g, s_tungl_global_size);
+		g << L_RESET << ']';
+	}
+
 	g << '[';
 	switch(level) {
 		case TUNGL_LEVEL_DEBUG:	g << C_DEBUG	"DEBUG"	L_RESET;	break;
@@ -179,41 +235,30 @@ static std::string tungl_format(const tungl_level_t level, std::string_view modu
 
 	auto time = (tungl_time() - s_tungl_start)/1000.0f;
 	g << '[' << std::right << std::setw(6);
-#ifdef __NEC__
-	constexpr size_t bufSize = 10;
-	char buf[bufSize];
-	snprintf(buf, bufSize, "%6.2f", time);
-	g << buf;
-#else
-	g << std::setprecision(2) << std::fixed << time;
+#ifndef __NEC__
+	g << std::setprecision(2) << std::fixed;
 #endif
-	g << ']' << L_EMPH;
+	tungl_to_string(g, time);
+	g << ']';
 
 	if(module.size()) {
-		g << '[';
+		g << '[' << L_EMPH;
 		g << module;
 		if(module_dots)
 			g << "...";
-		g << "] ";
+		g << L_RESET "] ";
 	} else {
 		g << ' ';
 	}
 
+	g << L_EMPH;
 	if(file_dots)
 		g << "...";
-	g << file;
+	g << file << L_RESET;
 	
 	if(line) {
-		g << " (";
-#ifdef __NEC__
-		snprintf(buf, bufSize, "%i", line);
-		g << buf;
-#else
-		g << line;
-#endif
-		g << ')';
+		g << " (" << L_EMPH; tungl_to_string(g, line); g << L_RESET << ')';
 	}
-	g << L_RESET;
 
 	for(int64_t i = 0; i < space; i++)
 		g << ' ';
@@ -314,5 +359,11 @@ TUNGL_API void tungl_throw [[noreturn]] (const char* module, const char* file, c
 	tungl_vthrow(module, file, line, msg, args);
 	va_end(args);
 }
+
+//------------------------------------------------------------------------------
+TUNGL_API int tungl_dist_global_rank	(void)	{	return s_tungl_global_rank;	}
+TUNGL_API int tungl_dist_global_size	(void)	{	return s_tungl_global_size;	}
+TUNGL_API int tungl_dist_local_rank		(void)	{	return s_tungl_local_rank;	}
+TUNGL_API int tungl_dist_local_size		(void)	{	return s_tungl_local_size;	}
 
 //------------------------------------------------------------------------------

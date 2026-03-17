@@ -7,6 +7,11 @@ projects.
 <table>
 <tr><th>Version</th><th>Comment</th></tr>
 
+<tr><td>v0.1.6</td><td>
+Added detection of rank within multi-process application (NEC MPI, OpenMPI and
+TorchRun).
+</td></tr>
+
 <tr><td>v0.1.5</td><td>
 Bugfixing for NCC compiler.
 </td></tr>
