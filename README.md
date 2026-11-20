@@ -7,6 +7,14 @@ projects.
 <table>
 <tr><th>Version</th><th>Comment</th></tr>
 
+<tr><td>v0.1.8</td><td>
+Added aarch64 build.
+</td></tr>
+
+<tr><td>v0.1.7</td><td>
+Fixed typo to find libtungl.a.
+</td></tr>
+
 <tr><td>v0.1.7</td><td>
 Fixed typo in SX-Aurora code.
 </td></tr>

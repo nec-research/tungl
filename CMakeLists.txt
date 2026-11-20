@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.12) # requires new FindPython3
 
-PROJECT(Tungl VERSION 0.1.7 LANGUAGES C CXX)
+PROJECT(Tungl VERSION 0.1.8 LANGUAGES C CXX)
 
 FIND_PACKAGE(Illyrian 0.2.0 REQUIRED)
 ILLYRIAN_PROJECT(
@@ -25,7 +25,7 @@ ELSE()
 ENDIF()
 
 ILLYRIAN_INSTALL_FIND_BEGIN		(Tungl PYTHON_NAME tungl FILE "include/tungl/version.h" PATHS "/usr/local/nle/")
-ILLYRIAN_INSTALL_FIND_REQUIRED	(LIBRARY Tungl LIBRARY "libtungl.so" "lubtungl.a" PATHS "\${Tungl_DIR}/lib64")
+ILLYRIAN_INSTALL_FIND_REQUIRED	(LIBRARY Tungl LIBRARY "libtungl.so" "libtungl.a" PATHS "\${Tungl_DIR}/lib64")
 ILLYRIAN_INSTALL_FIND_REQUIRED	(FILE Tungl SRC "tungl.cpp" PATHS "\${Tungl_DIR}/src/tungl")
 ILLYRIAN_INSTALL_FIND_SET		(Tungl INCLUDE_DIRS "\${Tungl_DIR}/include" CACHE STRING "Tungl include dir")
 ILLYRIAN_INSTALL_FIND_END		(Tungl
